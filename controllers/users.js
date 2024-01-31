@@ -23,6 +23,7 @@ export const userValidator = () => [
     .withMessage("Age must be a number greater than 0."),
 ];
 
+// export const validateUser =
 export const getUsers = async (req, res) => {
   console.log("Someone tried to get the users");
   try {
@@ -51,6 +52,7 @@ export const getUser = async (req, res) => {
 
 export const postUser = async (req, res) => {
   const { first_name, last_name, age } = req.body;
+  console.log(`Post ${first_name}, ${last_name}, ${age}`);
   const result = validationResult(req);
   if (!result.isEmpty()) {
     return res.status(400).send({ errors: result.array() });
@@ -62,6 +64,48 @@ export const postUser = async (req, res) => {
     const values = [first_name, last_name, age];
     const { rows } = await pool.query(text, values);
     res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const putUser = async (req, res) => {
+  const { id } = req.params;
+  const { first_name, last_name, age } = req.body;
+  console.log(`Put ${first_name}, ${last_name}, ${age}`);
+
+  try {
+    let text = "UPDATE users SET ";
+    let values = [];
+    if (first_name) {
+      text += "first_name = $1";
+      values.push(first_name);
+    }
+    if (last_name) {
+      text +=
+        (values.length > 0 ? ", " : "") + "last_name = $" + (values.length + 1);
+      values.push(last_name);
+    }
+    if (age) {
+      text += (values.length > 0 ? ", " : "") + "age = $" + (values.length + 1);
+      values.push(age);
+    }
+    if (!first_name && !last_name && !age)
+      res.status(400).json("first_name, last_name and age not specified.");
+    
+    text +=
+      (values.length > 0 ? " " : "") +
+      "WHERE id=$" +
+      (values.length + 1) +
+      " RETURNING *";
+    values.push(Number(id));
+    console.log(text, values);
+
+    const { rows } = await pool.query(text, values);
+
+    rows.length === 0
+      ? res.status(404).json("User not found")
+      : res.status(200).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
