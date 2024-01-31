@@ -1,7 +1,7 @@
 import { body } from "express-validator";
 import pool from "../db/pool.js";
 
-export const userValidator = () => [
+export const userValidator = [
     body("first_name")
       .notEmpty()
       .withMessage("First name required.")
@@ -23,7 +23,7 @@ export const userValidator = () => [
       .withMessage("Age must be a number greater than 0."),
   ];
   
-  export const validatePutUser = () => [
+  export const validatePutUser = [
     body("first_name").optional().notEmpty().isString().trim().escape(),
     body("last_name").optional().notEmpty().isString().trim().escape(),
     body("age").optional().notEmpty().isInt({ min: 0 }).trim().escape(),
