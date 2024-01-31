@@ -23,9 +23,14 @@ export const userValidator = () => [
     .withMessage("Age must be a number greater than 0."),
 ];
 
-// export const validateUser =
+export const validatePutUser = () => [
+  body("first_name").optional().notEmpty().isString().trim().escape(),
+  body("last_name").optional().notEmpty().isString().trim().escape(),
+  body("age").optional().notEmpty().isInt({ min: 0 }).trim().escape(),
+];
+
 export const getUsers = async (req, res) => {
-  console.log("Someone tried to get the users");
+  console.log("GET users");
   try {
     const text = "SELECT * FROM users";
     const { rows } = await pool.query(text);
@@ -37,7 +42,8 @@ export const getUsers = async (req, res) => {
 
 export const getUser = async (req, res) => {
   const { id } = req.params;
-  console.log(`Someone tried to get user ${id}`);
+  if (!id) res.status(400).json("User id required.")
+  console.log(`GET user ${id}`);
   try {
     const text = "SELECT * FROM users WHERE id=$1";
     const values = [id];
@@ -52,7 +58,7 @@ export const getUser = async (req, res) => {
 
 export const postUser = async (req, res) => {
   const { first_name, last_name, age } = req.body;
-  console.log(`Post ${first_name}, ${last_name}, ${age}`);
+  console.log(`POST ${first_name}, ${last_name}, ${age}`);
   const result = validationResult(req);
   if (!result.isEmpty()) {
     return res.status(400).send({ errors: result.array() });
@@ -72,7 +78,12 @@ export const postUser = async (req, res) => {
 export const putUser = async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, age } = req.body;
-  console.log(`Put ${first_name}, ${last_name}, ${age}`);
+  console.log(`PUT user ${id}: ${first_name}, ${last_name}, ${age}`);
+
+  const result = validationResult(req);
+  if (!result.isEmpty()) {
+    return res.status(400).send({ errors: result.array() });
+  }
 
   try {
     let text = "UPDATE users SET ";
@@ -92,7 +103,7 @@ export const putUser = async (req, res) => {
     }
     if (!first_name && !last_name && !age)
       res.status(400).json("first_name, last_name and age not specified.");
-    
+
     text +=
       (values.length > 0 ? " " : "") +
       "WHERE id=$" +
@@ -103,6 +114,22 @@ export const putUser = async (req, res) => {
 
     const { rows } = await pool.query(text, values);
 
+    rows.length === 0
+      ? res.status(404).json("User not found")
+      : res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  if (!id) res.status(400).json("User id required.");
+  console.log(`DELETE user ${id}`);
+  try {
+    const text = "DELETE FROM users WHERE id = $1 RETURNING *";
+    const values = [id];
+    const { rows } = await pool.query(text, values);
     rows.length === 0
       ? res.status(404).json("User not found")
       : res.status(200).json(rows[0]);
