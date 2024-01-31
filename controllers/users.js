@@ -67,22 +67,17 @@ export const putUser = async (req, res) => {
       values.push(last_name);
     }
     if (age) {
-      query += (values.length > 0 ? ", " : "") + "age = $" + (values.length + 1);
+      query +=
+        (values.length > 0 ? ", " : "") + "age = $" + (values.length + 1);
       values.push(age);
     }
     if (!first_name && !last_name && !age)
       res.status(422).json("first_name, last_name and age not specified."); // 422 Unprocessable Entity
 
-    query +=
-      (values.length > 0 ? " " : "") +
-      "WHERE id=$" +
-      (values.length + 1) +
-      " RETURNING *";
+    query += " WHERE id=$" + (values.length + 1) + " RETURNING *";
     values.push(Number(id));
-    console.log(query, values);
 
     const { rows } = await pool.query(query, values);
-
     res.status(200).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
