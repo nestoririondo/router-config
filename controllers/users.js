@@ -12,17 +12,8 @@ export const getUsers = async (req, res) => {
   }
 };
 
-export const getUser = async (req, res) => {
-  const { id } = req.params;
-  console.log(`GET user ${id}`);
-  try {
-    const query = "SELECT * FROM users WHERE id=$1";
-    const values = [id];
-    const { rows } = await pool.query(query, values);
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+export const getUser =  (req, res) => {
+  res.status(200).json(req.user);
 };
 
 export const postUser = async (req, res) => {
